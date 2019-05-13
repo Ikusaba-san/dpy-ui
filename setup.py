@@ -9,9 +9,9 @@ readme = _read('README.md')
 exec(compile(_read('discord/ext/ui/version.py'), 'discord/ext/ui/version.py', 'exec'))
 
 setup(
-    name='discord.py-ui',
+    name='dpy-ui',
     author='Ikusaba-san',
-    url='https://github.com/Ikusaba-san/discord.py-ui',
+    url='https://github.com/Ikusaba-san/dpy-ui',
     version=__version__,
     packages=['discord.ext.ui'],
     license='MIT',
