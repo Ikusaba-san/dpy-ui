@@ -11,7 +11,7 @@ __all__ = [
 class Message:
     """Helper class for sending multiple things in one message."""
     content: str = None
-    file: discord.file = None
+    file: discord.File = None
     files: typing.List[discord.File] = None
     embed: discord.Embed = None
 
