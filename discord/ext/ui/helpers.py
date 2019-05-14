@@ -63,13 +63,14 @@ class Choice:
 # TODO: Paginated select.
 
 class Selector(Session):
-    def __init__(self, prompt, choices, reactions, **kwargs):
+    def __init__(self, prompt, choices, **kwargs):
         super().__init__(**kwargs)
         self._result = None
+        self._use_reactions = False
 
         self.prompt = prompt
         self.choices = list(choices)
-        self._use_reactions = reactions
+
 
     def format_choices(self):
         if self._use_reactions:
@@ -144,8 +145,10 @@ class Selector(Session):
     # ----- Main -----
 
     async def start(self, ctx):
-        if self._use_reactions is None:
-            self._use_reactions = ctx.channel.permissions_for(ctx.me).add_reactions
+        self._use_reactions = (
+            ctx.channel.permissions_for(ctx.me).add_reactions
+            and any(choice.button for choice in self.choices)
+        )
 
         if self._use_reactions:
             buttons = self.__ui_buttons__ = self.__ui_buttons__.copy()
@@ -163,8 +166,14 @@ class Selector(Session):
         await self.start(ctx)
         return self._result
 
-async def select(ctx, prompt, choices, selector_cls=None, reactions=None, **options):
+async def select(ctx, prompt, choices, selector_cls=None, **options):
     """Prompts a user to choose between a list of choices.
+
+    .. note::
+
+    Whether this uses buttons or text input depends on two things:
+    1. The reactions permissions in the channel in question
+    2. The choices having any buttons at all.
 
     Parameters
     ----------
@@ -175,14 +184,6 @@ async def select(ctx, prompt, choices, selector_cls=None, reactions=None, **opti
         input, wrap them in a Choice object.
     selector_cls:
         The class to create the underlying selector. Defaults to Selector.
-    reactions: Optional[bool]
-        A tribool indicating if it must use reactions.
-
-        If True, reactions are forced and if it can't add reactions, it
-        will error.
-        If False, text input is forced.
-        If None, whether reactions or text input will be used will depend
-        on the permissions in the channel in question.
     options:
         Any options that will be passed to the underlying selector class
     """
@@ -191,7 +192,7 @@ async def select(ctx, prompt, choices, selector_cls=None, reactions=None, **opti
 
     choices = (obj if isinstance(obj, Choice) else Choice(obj) for obj in choices)
 
-    selector = selector_cls(prompt, choices, reactions=reactions, **options)
+    selector = selector_cls(prompt, choices, **options)
     return await selector.select(ctx)
 
 # ----- Confirm -----
@@ -208,10 +209,6 @@ class Confirmation(Selector):
 
 async def confirm(ctx, prompt, emojis=None, user=None, **options):
     r"""Prompts a user for confirmation (yes/no)
-
-    .. note::
-    Unlike select, whether it uses buttons or text depends on the permissions
-    on the current channel. This cannot be changed.
 
     Parameters
     ----------
@@ -236,5 +233,5 @@ async def confirm(ctx, prompt, emojis=None, user=None, **options):
     # Not efficient in any way, but it's short :^)
     choices = list(map(Choice, [True, False], emojis, ['y(?:es)?', 'no?'], ['Yes', 'No']))
 
-    selector = Confirmation(prompt, choices, allowed_users={user.id}, reactions=None, **options)
+    selector = Confirmation(prompt, choices, allowed_users={user.id}, **options)
     return await selector.select(ctx)
