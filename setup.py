@@ -5,6 +5,7 @@ def _read(file):
         return f.read()
 
 readme = _read('README.md')
+install_requires = _read('requirements.txt').splitlines()
 # get version without importing the package
 exec(compile(_read('discord/ext/ui/version.py'), 'discord/ext/ui/version.py', 'exec'))
 
@@ -18,6 +19,7 @@ setup(
     description='User interaction utilities for discord.py.',
     long_description=readme,
     include_package_data=True,
+    install_requires=install_requires,
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Intended Audience :: Developers',

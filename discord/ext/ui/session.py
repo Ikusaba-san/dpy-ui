@@ -161,7 +161,7 @@ class Session:
             for emoji in self.__ui_buttons__:
                 await self.message.add_reaction(emoji)
 
-        asyncio.create_task(add_reactions())
+        ctx.bot.loop.create_task(add_reactions())
 
         await self.__loop()
 
