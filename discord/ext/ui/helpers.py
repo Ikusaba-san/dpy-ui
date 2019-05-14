@@ -24,16 +24,15 @@ async def _send_prompt(ctx, prompt):
 
 # ----- Prompt ----
 
-async def prompt(ctx, prompt, timeout=120):
+async def prompt(ctx, prompt, timeout=None):
     """Prompts a user for input.
 
     Parameters
     ----------
     prompt: Union[str, discord.Embed, Message]
         The message to show along with the prompt.
-    timeout: Optionatl[float]
-        Maximum time to wait for user input, defaults to 2 minutes.
-        For no timeout, pass None.
+    timeout: Optional[float]
+        Maximum time to wait for user input. Defaults to no timeout.
     """
     await _send_prompt(ctx, prompt)
 

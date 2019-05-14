@@ -43,7 +43,7 @@ class Session:
     ----------
     timeout: Optional[float]
         Max time in seconds to wait for a message or reaction event.
-        Can be None for no timeout.
+        Defaults to no timeout.
     delete_after: bool
         Whether or not to delete the message once the session is finished.
         Defaults to False
@@ -63,7 +63,7 @@ class Session:
         hasn't started yet.
     """
 
-    def __init__(self, timeout=120, delete_after=False, allowed_users=None):
+    def __init__(self, timeout=None, delete_after=False, allowed_users=None):
         self.timeout = timeout
         self.delete_after = delete_after
         self.allowed_users = allowed_users
