@@ -177,7 +177,7 @@ class Selector(Session):
         await self.start(ctx)
         return self._result
 
-async def select(ctx, prompt, choices, selector_cls=None, **options):
+async def select(ctx, prompt, choices, *, selector_cls=None, **options):
     """Prompts a user to choose between a list of choices.
 
     .. note::
