@@ -85,7 +85,6 @@ class Selector(Session):
         # and buttons going on at the same time.
         must_have_buttons = bool(self.choices[0].button)
         for choice in self.choices[1:]:
-            print(repr(choice))
             if bool(choice.button) != must_have_buttons:
                 raise ValueError('either all or none of the choices should have a button assigned')
 
