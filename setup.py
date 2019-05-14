@@ -20,6 +20,7 @@ setup(
     long_description=readme,
     include_package_data=True,
     install_requires=install_requires,
+    python_requires='>=3.6',
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Intended Audience :: Developers',
