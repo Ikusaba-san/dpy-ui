@@ -242,8 +242,11 @@ async def confirm(ctx, prompt, emojis=None, user=None, **options):
     if user is None:
         user = ctx.author
 
-    # Not efficient in any way, but it's short :^)
-    choices = list(map(Choice, [True, False], emojis, ['y(?:es)?', 'no?'], ['Yes', 'No']))
+    yes, no = emojis
+    choices = [
+        Choice(True, button=yes, pattern='(?i)y(?:es)?', label='Yes'),
+        Choice(False, button=no, pattern='(?i)no?', label='No'),
+    ]
 
     selector = Confirmation(prompt, choices, allowed_users={user.id}, **options)
     return await selector.select(ctx)
