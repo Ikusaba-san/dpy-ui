@@ -71,6 +71,14 @@ class Selector(Session):
         self.prompt = prompt
         self.choices = list(choices)
 
+        # Validate all the choices so that either all choices have a button, or
+        # none of them do because it doesn't make much sense to have both text
+        # and buttons going on at the same time.
+        must_have_buttons = bool(self.choices[0].button)
+        for choice in self.choices[1:]:
+            print(repr(choice))
+            if bool(choice.button) != must_have_buttons:
+                raise ValueError('either all or none of the choices should have a button assigned')
 
     def format_choices(self):
         if self._use_reactions:
@@ -182,6 +190,10 @@ async def select(ctx, prompt, choices, selector_cls=None, **options):
     choices: Iterable[typing.Any]
         An iterable of choices. To add button functionalities or special text
         input, wrap them in a Choice object.
+
+        Note that either all or none of the choices should have a button assigned
+        to them, to avoid complications of having text and buttons going on at
+        the same time.
     selector_cls:
         The class to create the underlying selector. Defaults to Selector.
     options:
