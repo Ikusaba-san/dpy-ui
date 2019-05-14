@@ -48,6 +48,7 @@ async def prompt(ctx, prompt, timeout=120):
 
 @dataclass
 class Choice:
+    """Helper class for customizing choices in select"""
     value: typing.Any
     button: str = None
     pattern: str = None
@@ -66,6 +67,12 @@ class Choice:
 # TODO: Paginated select.
 
 class Selector(Session):
+    """Helper class for the selection process in select
+
+    There is little need to make one yourself, unless you wish to
+    customise it.
+    """
+
     def __init__(self, prompt, choices, **kwargs):
         super().__init__(**kwargs)
         self._result = None
