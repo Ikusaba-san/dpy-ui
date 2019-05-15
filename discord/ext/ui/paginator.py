@@ -66,8 +66,7 @@ class AsyncIterableSource(PageSource):
         cache_len = len(self._cache)
         if index >= cache_len:
             # islice can't be used here because this is an async iterable
-            for _ in range(index + 1 - cache_len):
-                self._cache.append(await self._it.__anext__())
+            self._cache.extend(await atake(self._it, index + 1 - cache_len))
 
         try:
             return self._cache[index]
