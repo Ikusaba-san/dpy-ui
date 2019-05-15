@@ -20,10 +20,18 @@ PREVIOUS_EMOJI = '\N{BLACK LEFT-POINTING TRIANGLE}'
 NEXT_EMOJI = '\N{BLACK RIGHT-POINTING TRIANGLE}'
 
 class PageSource:
+    """Base class for any sources of "pages" in the Paginator"""
+
     def __repr__(self):
         return f'<{self.__class__.__name__}>'
 
     async def get_page(self, index):
+        """Returns a page with a given index.
+
+        If an index is invalid, raise InvalidPage.
+
+        Subclasses must override this.
+        """
         raise NotImplementedError
 
 # ----- Sources -----
