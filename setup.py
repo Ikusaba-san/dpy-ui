@@ -18,6 +18,7 @@ setup(
     license='MIT',
     description='User interaction utilities for discord.py.',
     long_description=readme,
+    long_description_content_type='text/markdown',
     include_package_data=True,
     install_requires=install_requires,
     python_requires='>=3.6',
