@@ -1,5 +1,6 @@
 import asyncio
 import re
+from collections import namedtuple
 from contextlib import suppress
 
 import discord
@@ -18,12 +19,23 @@ class _EVERYONE:
 
 EVERYONE = _EVERYONE()
 
-def button(emoji):
+_Button = namedtuple('_Button', 'emoji press')
+
+def button(emoji, *, unpress=False):
     """Decorates a function that will be called when a user reacts with
     a given emoji
+
+    Parameters
+    ----------
+    emoji: str
+        The emoji that will trigger this button
+    unpress: Optional[bool]
+        Whether the callback will be called when pressing or releasing the
+        button. Defaults to False, or when it's pressed.
     """
+
     def decorator(func):
-        func.__ui_button__ = emoji
+        func.__ui_button__ = _Button(emoji=emoji, press=not unpress)
         return func
     return decorator
 
@@ -78,11 +90,15 @@ class Session:
     def __init_subclass__(cls, **kwargs):
         buttons = {}
         commands = {}
+        unbuttons = {}
 
         for name, value in cls.__dict__.items():
             button = getattr(value, '__ui_button__', None)
             if button:
-                buttons[button] = value
+                if button.press:
+                    buttons[button.emoji] = value
+                else:
+                    unbuttons[button.emoji] = value
 
             command = getattr(value, '__ui_command__', None)
             if command:
@@ -90,6 +106,7 @@ class Session:
 
         cls.__ui_buttons__ = buttons
         cls.__ui_commands__ = commands
+        cls.__ui_unbuttons__ = unbuttons
 
     async def on_message(self, message):
         if message.channel.id != self.message.channel.id:
@@ -108,19 +125,30 @@ class Session:
             await self._queue.put((callback, message, *match.groups()))
             break
 
-    async def on_raw_reaction_add(self, payload):
+    async def on_raw_reaction_action(self, payload, *, pressed=True):
         if payload.message_id != self.message.id:
             return
 
         if payload.user_id not in self.allowed_users:
             return
 
-        button = self.__ui_buttons__.get(str(payload.emoji))
+        if pressed:
+            lookup = self.__ui_buttons__
+        else:
+            lookup = self.__ui_unbuttons__
+
+        button = lookup.get(str(payload.emoji))
         if not button:
             return
 
         callback = button.__get__(self, self.__class__)
         await self._queue.put((callback, payload))
+
+    async def on_raw_reaction_add(self, payload):
+        await self.on_raw_reaction_action(payload, pressed=True)
+
+    async def on_raw_reaction_remove(self, payload):
+        await self.on_raw_reaction_action(payload, pressed=False)
 
     async def on_raw_message_delete(self, payload):
         if payload.message_id == self.message.id:
@@ -155,6 +183,7 @@ class Session:
 
         ctx.bot.add_listener(self.on_message)
         ctx.bot.add_listener(self.on_raw_reaction_add)
+        ctx.bot.add_listener(self.on_raw_reaction_remove)
         ctx.bot.add_listener(self.on_raw_message_delete)
 
         async def add_reactions():
@@ -167,6 +196,7 @@ class Session:
 
         ctx.bot.remove_listener(self.on_message)
         ctx.bot.remove_listener(self.on_raw_reaction_add)
+        ctx.bot.remove_listener(self.on_raw_reaction_remove)
         ctx.bot.remove_listener(self.on_raw_message_delete)
 
         with suppress(discord.HTTPException):
