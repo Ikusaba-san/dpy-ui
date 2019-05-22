@@ -187,6 +187,36 @@ class Session:
             func, *args = job
             await func(*args)
 
+    async def _prepare(self):
+        bot = self.context.bot
+
+        bot.add_listener(self.on_message)
+        bot.add_listener(self.on_raw_reaction_add)
+        bot.add_listener(self.on_raw_reaction_remove)
+        bot.add_listener(self.on_raw_message_delete)
+
+        async def add_reactions():
+            for emoji in self.__ui_buttons__:
+                await self.message.add_reaction(emoji)
+
+        bot.loop.create_task(add_reactions())
+
+    async def _cleanup(self):
+        bot = self.context.bot
+
+        bot.remove_listener(self.on_message)
+        bot.remove_listener(self.on_raw_reaction_add)
+        bot.remove_listener(self.on_raw_reaction_remove)
+        bot.remove_listener(self.on_raw_message_delete)
+
+        with suppress(discord.HTTPException):
+            if self.delete_after:
+                await self.message.delete()
+            else:
+                await self.message.clear_reactions()
+
+        self.message = None
+
     async def start(self, ctx):
         """Starts the session"""
 
@@ -197,31 +227,12 @@ class Session:
 
         self.message = await self.send_initial_message()
 
-        ctx.bot.add_listener(self.on_message)
-        ctx.bot.add_listener(self.on_raw_reaction_add)
-        ctx.bot.add_listener(self.on_raw_reaction_remove)
-        ctx.bot.add_listener(self.on_raw_message_delete)
+        await self._prepare()
 
-        async def add_reactions():
-            for emoji in self.__ui_buttons__:
-                await self.message.add_reaction(emoji)
-
-        ctx.bot.loop.create_task(add_reactions())
-
-        await self.__loop()
-
-        ctx.bot.remove_listener(self.on_message)
-        ctx.bot.remove_listener(self.on_raw_reaction_add)
-        ctx.bot.remove_listener(self.on_raw_reaction_remove)
-        ctx.bot.remove_listener(self.on_raw_message_delete)
-
-        with suppress(discord.HTTPException):
-            if self.delete_after:
-                await self.message.delete()
-            else:
-                await self.message.clear_reactions()
-
-        self.message = None
+        try:
+            await self.__loop()
+        finally:
+            await self._cleanup()
 
     async def stop(self):
         """Signal the session to stop.
