@@ -92,6 +92,22 @@ class Session:
         commands = {}
         unbuttons = {}
 
+        def base_class_attr_update(base, field, mapping):
+            base_fields = getattr(b, field, None)
+            if not base_fields:
+                return
+
+            for name, value in base_fields.items():
+                mapping[name] = value
+
+        # Go through bases in reverse-MRO order, excluding the class itself.
+        # It's reversed so that subclasses can override earlier buttons/commands.
+        for b in cls.__mro__[-1:0:-1]:
+            base_class_attr_update(b, '__ui_buttons__', buttons)
+            base_class_attr_update(b, '__ui_commands__', commands)
+            base_class_attr_update(b, '__ui_unbuttons__', unbuttons)
+
+        # Go through the dictionary to add new buttons/commands/unbuttons.
         for name, value in cls.__dict__.items():
             button = getattr(value, '__ui_button__', None)
             if button:
