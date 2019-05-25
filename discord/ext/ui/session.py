@@ -124,6 +124,92 @@ class Session:
         cls.__ui_commands__ = commands
         cls.__ui_unbuttons__ = unbuttons
 
+    # Local button/command adding/removal
+
+    def __check_ui_mapping(self, attr):
+        session_mapping = getattr(self, attr)
+        cls_mapping = getattr(self.__class__, attr)
+
+        if session_mapping is not cls_mapping:
+            return
+
+        setattr(self, attr, cls_mapping.copy())
+
+    def add_button(self, callback, emoji, *, unpress=False):
+        """Adds a button local to the session
+
+        Arguments are similiar to the @button decorator
+
+        Parameters
+        ----------
+        callback: Callable[[Session, RawReactionEvent]]
+            The callback in which to register the button with.
+
+            The first argument will be a session instance.
+            The second argument is a payload of the reaction event.
+        emoji: str
+            The emoji that will trigger this button
+        unpress: Optional[bool]
+            Whether the callback will be called when pressing or releasing the
+            button. Defaults to False, or when it's pressed.
+        """
+        if unpress:
+            attr = '__ui_unbuttons__'
+        else:
+            attr = '__ui_buttons__'
+
+        self.__check_ui_mapping(attr)
+        getattr(self, attr)[emoji] = callback
+
+    def remove_button(self, emoji):
+        """Removes a button local to the session.
+
+        If an emoji isn't registered as a button, it won't raise an error.
+
+        Parameters
+        ----------
+        emoji: str
+            The emoji of the button to be removed.
+        """
+
+        for attr in ['__ui_buttons__', '__ui_unbuttons__']:
+            self.__check_ui_mapping(attr)
+            getattr(self, attr).pop(emoji, None)
+
+    def add_command(self, callback, pattern):
+        """Adds a command local to the session
+
+        Arguments are similiar to the @command decorator
+
+        Parameters
+        ----------
+        callback: Callable[[Session, Message, ...]]
+            The callback in which to register the command with.
+
+            The first argument will be a session instance.
+            The second argument is the message that triggered the callback.
+            Any further arguments will depend on the regex pattern.
+        pattern: str
+            The regex pattern that will trigger the command.
+        """
+        self.__check_ui_mapping('__ui_commands__')
+        self.__ui_commands__[pattern] = callback
+
+    def remove_command(self, pattern):
+        """Removes a command local to the session.
+
+        If an pattern isn't registered as a button, it won't raise an error.
+
+        Parameters
+        ----------
+        pattern: str
+            The regex pattern that triggered the command.
+        """
+        self.__check_ui_mapping('__ui_commands__')
+        self.__ui_commands__.pop(pattern, None)
+
+    # Events
+
     async def on_message(self, message):
         if message.channel.id != self.message.channel.id:
             return
