@@ -48,6 +48,11 @@ def command(pattern):
         return func
     return decorator
 
+# Helper constants to avoid referring to magic attributes
+_BUTTONS = '__ui_buttons__'
+_COMMANDS = '__ui_commands__'
+_UNBUTTONS = '__ui_unbuttons__'
+
 class Session:
     """Base class for all interactive sessions.
 
@@ -103,9 +108,9 @@ class Session:
         # Go through bases in reverse-MRO order, excluding the class itself.
         # It's reversed so that subclasses can override earlier buttons/commands.
         for b in cls.__mro__[-1:0:-1]:
-            base_class_attr_update(b, '__ui_buttons__', buttons)
-            base_class_attr_update(b, '__ui_commands__', commands)
-            base_class_attr_update(b, '__ui_unbuttons__', unbuttons)
+            base_class_attr_update(b, _BUTTONS, buttons)
+            base_class_attr_update(b, _COMMANDS, commands)
+            base_class_attr_update(b, _UNBUTTONS, unbuttons)
 
         # Go through the dictionary to add new buttons/commands/unbuttons.
         for name, value in cls.__dict__.items():
@@ -154,9 +159,9 @@ class Session:
             button. Defaults to False, or when it's pressed.
         """
         if unpress:
-            attr = '__ui_unbuttons__'
+            attr = _UNBUTTONS
         else:
-            attr = '__ui_buttons__'
+            attr = _BUTTONS
 
         self.__check_ui_mapping(attr)
         getattr(self, attr)[emoji] = callback
@@ -172,7 +177,7 @@ class Session:
             The emoji of the button to be removed.
         """
 
-        for attr in ['__ui_buttons__', '__ui_unbuttons__']:
+        for attr in [_BUTTONS, _UNBUTTONS]:
             self.__check_ui_mapping(attr)
             getattr(self, attr).pop(emoji, None)
 
@@ -192,7 +197,7 @@ class Session:
         pattern: str
             The regex pattern that will trigger the command.
         """
-        self.__check_ui_mapping('__ui_commands__')
+        self.__check_ui_mapping(_COMMANDS)
         self.__ui_commands__[pattern] = callback
 
     def remove_command(self, pattern):
@@ -205,7 +210,7 @@ class Session:
         pattern: str
             The regex pattern that triggered the command.
         """
-        self.__check_ui_mapping('__ui_commands__')
+        self.__check_ui_mapping(_COMMANDS)
         self.__ui_commands__.pop(pattern, None)
 
     # Events
