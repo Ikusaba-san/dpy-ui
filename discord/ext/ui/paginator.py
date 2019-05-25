@@ -197,8 +197,7 @@ class Paginator(Session):
             await self.pages.get_page(1)
         except InvalidPage:
             # Single page
-            buttons = self.__ui_buttons__ = self.__ui_buttons__.copy()
-            del buttons[PREVIOUS_EMOJI]
-            del buttons[NEXT_EMOJI]
+            self.remove_button(PREVIOUS_EMOJI)
+            self.remove_button(NEXT_EMOJI)
 
         await super().start(ctx)

@@ -167,14 +167,12 @@ class Selector(Session):
         )
 
         if self._use_reactions:
-            buttons = self.__ui_buttons__ = self.__ui_buttons__.copy()
             for choice in self.choices:
                 if choice.button:
-                    buttons[choice.button] = self._on_button_press
+                    self.add_button(self._on_button_press, choice.button)
         else:
-            commands = self.__ui_commands__ = self.__ui_commands__.copy()
-            commands['([0-9]+)'] = self._on_number_input
-            commands['(.*)'] = self._on_text_input
+            self.add_command(self._on_number_input, '([0-9]+)')
+            self.add_command(self._on_text_input, '(.*)')
 
         await super().start(ctx)
 
