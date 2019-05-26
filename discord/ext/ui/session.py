@@ -268,9 +268,23 @@ class Session:
         """
         raise NotImplementedError
 
+    async def handle_timeout(self):
+        """Called when the timeout is raised in the Session
+
+        By default, it raises asyncio.TimeoutError
+
+        Subclasses may override this for custom behaviours when timeout
+        is raised.
+        """
+        raise asyncio.TimeoutError('The session timed out while waiting for a response')
+
     async def __loop(self):
         while True:
-            job = await asyncio.wait_for(self._queue.get(), self.timeout)
+            try:
+                job = await asyncio.wait_for(self._queue.get(), self.timeout)
+            except asyncio.TimeoutError:
+                await self.handle_timeout()
+                break
 
             if job is None:
                 break
