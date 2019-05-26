@@ -19,6 +19,16 @@ class _EVERYONE:
 
 EVERYONE = _EVERYONE()
 
+def _parse_emoji(emoji):
+    if isinstance(emoji, int):
+        return emoji
+
+    match = re.fullmatch(r'<a?:[a-zA-Z0-9\_]+:([0-9]+)>$', emoji)
+    if match:
+        return int(match[1])
+
+    return emoji
+
 _Button = namedtuple('_Button', 'emoji press')
 
 def button(emoji, *, unpress=False):
@@ -27,8 +37,10 @@ def button(emoji, *, unpress=False):
 
     Parameters
     ----------
-    emoji: str
-        The emoji that will trigger this button
+    emoji: Union[str, int]
+        The emoji that will trigger this button. In the case of custom
+        Discord emojis, either the ID of the emoji, or a string in the
+        format of `<:name:id>` is acceptable.
     unpress: Optional[bool]
         Whether the callback will be called when pressing or releasing the
         button. Defaults to False, or when it's pressed.
@@ -116,10 +128,11 @@ class Session:
         for name, value in cls.__dict__.items():
             button = getattr(value, '__ui_button__', None)
             if button:
+                emoji = _parse_emoji(button.emoji)
                 if button.press:
-                    buttons[button.emoji] = value
+                    buttons[emoji] = value
                 else:
-                    unbuttons[button.emoji] = value
+                    unbuttons[emoji] = value
 
             command = getattr(value, '__ui_command__', None)
             if command:
@@ -152,12 +165,16 @@ class Session:
 
             The first argument will be a session instance.
             The second argument is a payload of the reaction event.
-        emoji: str
-            The emoji that will trigger this button
+        emoji: Union[str, int]
+            The emoji that will trigger this button. In the case of custom
+            Discord emojis, either the ID of the emoji, or a string in the
+            format of `<:name:id>` is acceptable.
         unpress: Optional[bool]
             Whether the callback will be called when pressing or releasing the
             button. Defaults to False, or when it's pressed.
         """
+        emoji = _parse_emoji(emoji)
+
         if unpress:
             attr = _UNBUTTONS
         else:
@@ -173,9 +190,12 @@ class Session:
 
         Parameters
         ----------
-        emoji: str
-            The emoji of the button to be removed.
+        emoji: Union[str, int]
+            The emoji of the button to be removed. In the case of custom
+            Discord emojis, either the ID of the emoji, or a string in the
+            format of `<:name:id>` is acceptable.
         """
+        emoji = _parse_emoji(emoji)
 
         for attr in [_BUTTONS, _UNBUTTONS]:
             self.__check_ui_mapping(attr)
@@ -244,7 +264,8 @@ class Session:
         else:
             lookup = self.__ui_unbuttons__
 
-        button = lookup.get(str(payload.emoji))
+        emoji = payload.emoji
+        button = lookup.get(emoji.id or emoji.name)
         if not button:
             return
 
@@ -300,8 +321,9 @@ class Session:
         bot.add_listener(self.on_raw_reaction_remove)
         bot.add_listener(self.on_raw_message_delete)
 
-        async def add_reactions():
+        async def add_reactions(bot=bot):
             for emoji in self.__ui_buttons__:
+                emoji = bot.get_emoji(emoji) or emoji
                 await self.message.add_reaction(emoji)
 
         bot.loop.create_task(add_reactions())
