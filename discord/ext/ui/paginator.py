@@ -161,9 +161,8 @@ class Paginator(Session):
         page = await self.pages.get_page(index)
         return self.format_page(page)
 
-    async def send_initial_message(self):
-        page = await self.get_page(0)
-        return await self.context.send(**Message.to_args(page))
+    async def get_initial_message(self):
+        return await self.get_page(0)
 
     async def update_message(self, index):
         try:

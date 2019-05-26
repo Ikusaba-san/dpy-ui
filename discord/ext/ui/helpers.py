@@ -93,7 +93,8 @@ class Selector(Session):
             return '\n'.join(f'{choice.button} = {choice.label}' for choice in self.choices)
         return '\n'.join(f'{i} = {choice.label}' for i, choice in enumerate(self.choices, 1))
 
-    def format_prompt(self, prompt):
+    async def get_initial_message(self):
+        prompt = self.prompt
         choices = self.format_choices()
 
         if not isinstance(prompt, Message):
@@ -106,9 +107,6 @@ class Selector(Session):
             fields.content = f'{fields.content}\n{choices}'
 
         return fields
-
-    async def send_initial_message(self):
-        return await _send_prompt(self.context, self.format_prompt(self.prompt))
 
     # ----- Callbacks -----
 

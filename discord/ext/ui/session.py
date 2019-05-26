@@ -5,6 +5,8 @@ from contextlib import suppress
 
 import discord
 
+from .message import Message
+
 __all__ = [
     'button',
     'command',
@@ -282,12 +284,25 @@ class Session:
         if payload.message_id == self.message.id:
             await self.stop()
 
+    # Main methods
+
+    async def get_initial_message(self):
+        """Returns the initial message that will be sent from
+        send_initial_message.
+
+        Subclasses should prefer to override this if they need to
+        customise the message that will be sent.
+        """
+        raise NotImplementedError
+
     async def send_initial_message(self):
         """Returns the first message sent by this session
 
-        Subclasses must implement this.
+        Subclasses can implement this if they need custom behaviour
+        with sending the initial message.
         """
-        raise NotImplementedError
+        message = await self.get_initial_message()
+        return await self.context.send(**Message.to_args(message))
 
     async def handle_timeout(self):
         """Called when the timeout is raised in the Session
