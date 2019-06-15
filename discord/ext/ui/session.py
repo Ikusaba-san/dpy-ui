@@ -355,7 +355,11 @@ class Session:
             if self.delete_after:
                 await self.message.delete()
             else:
-                await self.message.clear_reactions()
+                try:
+                    await self.message.clear_reactions()
+                except discord.Forbidden:
+                    for emoji in self.__ui_buttons__:
+                        await self.message.remove_reaction(emoji, bot.user)
 
         self.message = None
 
@@ -387,4 +391,3 @@ class Session:
         """
 
         await self._queue.put(None)
-
