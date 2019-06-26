@@ -94,19 +94,18 @@ class Selector(Session):
         return '\n'.join(f'{i} = {choice.label}' for i, choice in enumerate(self.choices, 1))
 
     async def get_initial_message(self):
-        prompt = self.prompt
+        # Making it always make a copy to ensure that it doesn't
+        # accidentally mutate the underlying prompt message.
+        prompt = Message(**Message.to_args(self.prompt))
         choices = self.format_choices()
 
-        if not isinstance(prompt, Message):
-            fields = Message(**Message.to_args(prompt))
-
-        if fields.embed is not None:
-            description = fields.embed.description or ''
-            fields.embed.description = f'{description}\n{choices}'
+        if prompt.embed is not None:
+            description = prompt.embed.description or ''
+            prompt.embed.description = f'{description}\n{choices}'
         else:
-            fields.content = f'{fields.content}\n{choices}'
+            prompt.content = f'{prompt.content}\n{choices}'
 
-        return fields
+        return prompt
 
     # ----- Callbacks -----
 
