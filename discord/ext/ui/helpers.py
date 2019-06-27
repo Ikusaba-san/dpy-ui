@@ -35,7 +35,16 @@ async def prompt(ctx, prompt, timeout=None):
         Maximum time to wait for user input. Defaults to no timeout.
     """
     await _send_prompt(ctx, prompt)
+    await input(ctx, timeout)
 
+async def input(ctx, timeout=None):
+    """Gets a message from a user.
+
+    Parameters
+    ----------
+    timeout: Optional[float]
+        Maximum time to wait for user input. Defaults to no timeout.
+    """
     def check(message):
         return message.author == ctx.author and message.channel == ctx.channel
 
